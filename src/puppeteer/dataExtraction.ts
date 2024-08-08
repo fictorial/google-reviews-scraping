@@ -10,45 +10,41 @@ export const getReviewsFromPage = async (
 ) => {
   const reviews = await page.evaluate(() => {
     return Array.from(
-      document.querySelectorAll(
-        'div[jsaction="mouseover:pane.review.in; mouseout:pane.review.out"]'
-      )
+      document.querySelectorAll(':not(button):not([aria-label])[data-review-id]')
     ).map((el) => {
-      const getFirstElementChild = el.firstElementChild;
-      const nameElement =
-        getFirstElementChild?.children[1].children[1].children[0].children[0]
-          .children[0];
-      const userAvatarUrl = getFirstElementChild?.children[0]
-        .querySelector('button > img')
-        ?.getAttribute('src');
-
-      const reviewElement = getFirstElementChild?.children[3];
-      const ratingElement = reviewElement?.children[0];
-
-      const getImagesElement = reviewElement?.children[2]
-        ? Array.from(reviewElement.children[2].querySelectorAll('button'))
-        : [];
+      const userName = el.querySelector('button[data-review-id][data-href] div:first-child')?.textContent;
+      const userAvatarUrl = el.querySelector('button[data-review-id] img')?.getAttribute('src');
+      const rating = el.querySelector('span[role="img"][aria-label*=" stars"]')?.getAttribute('aria-label');
+      const date = el.querySelector('span[role="img"][aria-label*=" stars"] + span')?.textContent;
+      const comment = el.querySelector('div[lang][tabindex]:not([aria-label])')?.textContent;
+      // TODO I don't know if this is correct b/c I cannot find any comments that have images...
+      const images = Array.from(el.querySelectorAll('div[lang][tabindex] + div img')).map((img) => img.getAttribute('src'));
+      const reviewId = el.getAttribute('data-review-id');
 
       return {
-        userName: nameElement?.textContent?.trim(),
-        userAvatarUrl,
-        rating: ratingElement?.children[0].childElementCount,
-        date: ratingElement?.children[1].textContent?.trim()
-          ? ratingElement.children[1].textContent.trim()
-          : null,
-        comment: reviewElement?.children[1]
-          .querySelector('span')
-          ?.textContent?.trim(),
-        images: getImagesElement.flatMap((button) => {
-          const style = button.getAttribute('style');
-          const regex = /(?<=background-image: url\(").+?(?="\))/;
-          const match = style?.match(regex);
-          return match ?? [];
-        }),
-        reviewId: el.getAttribute('data-review-id'),
-      };
+          userName,
+          userAvatarUrl,
+          rating: parseInt(rating?.split(' ')[0] ?? '0', 10),
+          date,
+          comment,
+          images,
+          reviewId
+      }
     });
   });
+
+  for (const review of reviews) {
+      const { userName, userAvatarUrl, rating, date, comment, images, reviewId } = review;
+
+      console.debug('-----------------------------------------');
+      console.debug('reviewId:', reviewId);
+      console.debug('userName:', userName);
+      console.debug('userAvatarUrl:', userAvatarUrl);
+      console.debug('rating:', rating);
+      console.debug('date:', date);
+      console.debug('comment:', comment);
+      console.debug('images:', images);
+  }
 
   const findLastCursor = reviews.findIndex(
     (review) => review?.reviewId === lastCursor

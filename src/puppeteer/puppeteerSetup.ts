@@ -8,7 +8,7 @@ export const SCROLL_TIMEOUT = 2000;
 
 export async function launchBrowser() {
   const browser = await puppeteer.launch({
-    headless: 'new',
+    headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   });
   return browser;

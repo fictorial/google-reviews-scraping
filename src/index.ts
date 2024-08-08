@@ -25,27 +25,40 @@ export const getLocalPlaceReviews = async ({
   placeUrl,
   options,
 }: LocalPlaceReviewsParams): Promise<ReviewsType> => {
+  console.debug('loading',placeUrl)
   const browser = await launchBrowser();
+  console.debug('browser launched')
 
   const page = await browser.newPage();
   page.setDefaultNavigationTimeout(options?.navigationTimeout ?? 6000);
+
+  console.debug('goto',placeUrl)
   await page.goto(placeUrl);
+  console.debug('setTimeout', 2000)
   await new Promise((r) => setTimeout(r, 2000));
 
   const orderSelector = "button[aria-label='Sort reviews']";
   const orderButtonSelector = "div[role='menuitemradio'][data-index='1']";
 
+  console.debug('waitForSelector',orderSelector)
   await page.waitForSelector(orderSelector);
+  console.debug('click',orderSelector)
   await page.click(orderSelector);
 
+  console.debug('waitForSelector',orderButtonSelector)
   await page.waitForSelector(orderButtonSelector);
+  console.debug('click',orderButtonSelector)
   await page.click(orderButtonSelector);
 
+  console.debug('setTimeout', 5000)
   await new Promise((r) => setTimeout(r, 5000));
+  console.debug('waitForSelector','.fontBodyMedium')
   await page.waitForSelector('.fontBodyMedium');
 
+  console.debug('waitForSelector', '[role="tablist"]')
   await page.waitForSelector('[role="tablist"]');
 
+  console.debug('$eval', '[role="tablist"]')
   await page.$eval('[role="tablist"]', (tablist) => {
     if (tablist.children.length > 0) {
       const firstChild = tablist.children[1];
@@ -59,6 +72,7 @@ export const getLocalPlaceReviews = async ({
   });
 
   try {
+      console.debug('getAllReviewsFromPage')
     const { lastCursor, reviews } = await getAllReviewsFromPage(
       page,
       options?.lastCursor
@@ -66,6 +80,7 @@ export const getLocalPlaceReviews = async ({
 
     const parsedReviews = ReviewsSchemaResponse.parse({ lastCursor, reviews });
 
+    console.debug('close')
     await browser.close();
 
     return parsedReviews;
