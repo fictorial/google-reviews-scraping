@@ -32,7 +32,7 @@ export const getLocalPlaceReviews = async ({
   await page.goto(placeUrl);
   await new Promise((r) => setTimeout(r, 2000));
 
-  const orderSelector = "button[aria-label='Classificar avaliações']";
+  const orderSelector = "button[aria-label='Sort reviews']";
   const orderButtonSelector = "div[role='menuitemradio'][data-index='1']";
 
   await page.waitForSelector(orderSelector);
